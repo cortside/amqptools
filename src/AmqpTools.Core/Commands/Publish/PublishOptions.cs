@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using CommandLine;
 
 namespace AmqpTools.Core.Commands.Publish {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AmqpTools.Core.Commands;
 using AmqpTools.Core.Commands.DeleteMessage;

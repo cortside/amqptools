@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 
 namespace AmqpTools.Core.Commands.DeleteMessage {
     [Verb("delete", HelpText = "deletes a message from a queue")]

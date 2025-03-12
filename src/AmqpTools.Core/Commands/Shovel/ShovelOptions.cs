@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 
 namespace AmqpTools.Core.Commands.Shovel {
     [Verb("shovel", HelpText = "shovels deadletterqueue for a queue")]

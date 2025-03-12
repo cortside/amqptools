@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace AmqpTools.Core.Commands {
     public class Configuration {

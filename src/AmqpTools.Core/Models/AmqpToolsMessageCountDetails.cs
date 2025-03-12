@@ -1,4 +1,4 @@
-﻿namespace AmqpTools.Core.Models {
+namespace AmqpTools.Core.Models {
     /// <summary>
     /// Response model for message count details
     /// </summary>

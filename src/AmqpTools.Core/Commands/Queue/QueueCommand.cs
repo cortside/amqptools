@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using AmqpTools.Core.Exceptions;
 using AmqpTools.Core.Models;

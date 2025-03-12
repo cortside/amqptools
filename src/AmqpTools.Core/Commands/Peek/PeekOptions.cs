@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 
 namespace AmqpTools.Core.Commands.Peek {
     [Verb("peek", HelpText = "peeks at a queue for amqp messages")]

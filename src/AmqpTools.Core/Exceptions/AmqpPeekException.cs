@@ -1,4 +1,4 @@
-﻿using Cortside.Common.Messages.MessageExceptions;
+using Cortside.Common.Messages.MessageExceptions;
 
 namespace AmqpTools.Core.Exceptions {
     public class AmqpPeekException : InternalServerErrorResponseException {

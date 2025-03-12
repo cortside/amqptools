@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using AmqpTools.Core.Commands;
 using AmqpTools.Core.Commands.Publish;
-using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Shouldly;
 using Xunit;
 
 namespace AmqpTools.Test {
@@ -22,9 +22,10 @@ namespace AmqpTools.Test {
         [Fact]
         public void ShouldThrowOnUnknownCommand() {
             // Act & assert
-            new CommandFactory().Invoking(x => x.CreateCommand(loggerFactory, new string[] { "blah" }, new Configuration()))
-                .Should().Throw<ArgumentException>()
-                .WithMessage("unknown command blah (Parameter 'name')");
+            var exception = Should.Throw<ArgumentException>(() =>
+                new CommandFactory().CreateCommand(loggerFactory, new string[] { "blah" }, new Configuration())
+            );
+            exception.Message.ShouldBe("unknown command blah (Parameter 'name')");
         }
 
         [Fact]
@@ -33,9 +34,9 @@ namespace AmqpTools.Test {
             var command = new CommandFactory().CreateCommand(loggerFactory, new string[] { "publish" }, new Configuration());
 
             // assert
-            command.Should().NotBeNull();
-            command.Should().BeOfType<PublishCommand>();
-            command.Logger.Should().NotBeNull();
+            command.ShouldNotBeNull();
+            command.ShouldBeOfType<PublishCommand>();
+            command.Logger.ShouldNotBeNull();
         }
     }
 }

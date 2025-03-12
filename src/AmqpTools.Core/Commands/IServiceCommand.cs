@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace AmqpTools.Core.Commands {
     public interface IServiceCommand<in TOptions, out TResult> {

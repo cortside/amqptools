@@ -1,3 +1,7 @@
+#https://github.com/jrsearles/DotEnv/blob/main/.github/workflows/ci.yaml
+# see for dotnet tool use
+
+
 ## https://www.appveyor.com/docs/appveyor-yml/
 
 image: Visual Studio 2022
