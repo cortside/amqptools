@@ -254,3 +254,5 @@ coverage.opencover.xml
 *.local.json
 .refsignored
 .env.local
+
+amqptools.json
