@@ -2,8 +2,24 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <PublishSingleFile>true</PublishSingleFile>
+    <PublishSingleFile>false</PublishSingleFile>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>AmqpTools</PackageId>
+    <Company>Cortside Consulting</Company>
+    <Description>Tool for interacting with AMQP 1.0 compliant broker</Description>
+    <Copyright>Copyright (c) 2017 Cortside Consulting and Contributors</Copyright>
+    <Summary>Tool for interacting with AMQP 1.0 compliant broker</Summary>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/cortside/amqptools</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageIconUrl>https://avatars.githubusercontent.com/u/32287038?s=60</PackageIconUrl>
+
+    <ToolCommandName>amqptools</ToolCommandName>
+    <PackAsTool>true</PackAsTool>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.3" />
