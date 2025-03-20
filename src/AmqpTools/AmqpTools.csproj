@@ -16,6 +16,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageIconUrl>https://avatars.githubusercontent.com/u/32287038?s=60</PackageIconUrl>
 
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <ToolCommandName>amqptools</ToolCommandName>
     <PackAsTool>true</PackAsTool>
   </PropertyGroup>
