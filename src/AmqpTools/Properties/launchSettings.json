@@ -2,7 +2,7 @@
   "profiles": {
     "AmqpTools": {
       "commandName": "Project",
-      "commandLineArgs": "queue --key secret --queue shoppingcart.queue"
+      "commandLineArgs": "peek -q onlineapplication.queue --messageType deadletter --count 10 --policyname RootManageSharedAccessKey"
     }
   }
 }

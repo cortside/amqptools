@@ -37,27 +37,6 @@ namespace AmqpTools.Core.Commands {
         [Option("config", Default = "amqptools.json", Required = false, HelpText = "filename for Message data/json")]
         public string Config { get; set; }
 
-        //private string Url => $"{Protocol}://{PolicyName}:{Key}@{Namespace}/";
-
-        //private string ConnectionString {
-        //    get {
-        //        if (Namespace.Contains("windows.net")) {
-        //            return $"Endpoint=sb://{Namespace}/;SharedAccessKeyName={PolicyName};SharedAccessKey={Key}";
-        //        }
-        //        return null;
-        //    }
-        //}
-
-        //private TimeSpan TimeSpan {
-        //    get {
-        //        TimeSpan timeout = TimeSpan.MaxValue;
-        //        if (Timeout != 0) {
-        //            timeout = TimeSpan.FromSeconds(Timeout);
-        //        }
-        //        return timeout;
-        //    }
-        //}
-
         /// <summary>
         /// Do not log this value
         /// </summary>

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AmqpTools.Core.Exceptions;
 using AmqpTools.Core.Models;
 using Azure.Messaging.ServiceBus;
@@ -10,23 +11,21 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace AmqpTools.Core.Commands.Queue {
-    public class QueueCommand : ICommand, IServiceCommand<QueueOptions, AmqpToolsQueueRuntimeInfo> {
-        private const int EXIT_SUCCESS = 0;
-        const int ERROR_NO_MESSAGE = 1;
-        const int ERROR_OTHER = 2;
-
-        private ParserResult<QueueOptions> result;
+    public class QueueCommand : ICommand {
+        private QueueOptions options;
 
         public QueueCommand() {
-            if (GetType().GetConstructor(Type.EmptyTypes) == null) {
-                throw new InvalidProgramException("Parameterless constructor required.");
-            }
+        }
+
+        public QueueCommand(ILogger logger, QueueOptions options) {
+            this.options = options;
+            Logger = logger;
         }
 
         public ILogger Logger { get; set; }
 
         public void ParseArguments(string[] args, Configuration config) {
-            result = Parser.Default.ParseArguments<QueueOptions>(args);
+            var result = Parser.Default.ParseArguments<QueueOptions>(args);
             result.WithParsed(opts => {
                 opts.ApplyConfig();
             });
@@ -41,37 +40,35 @@ namespace AmqpTools.Core.Commands.Queue {
             } else {
                 Logger.LogInformation("Environment {Env} not found in config, using command line settings", result.Value.Environment);
             }
+
+            if (result.Errors.Any()) {
+                foreach (var error in result.Errors) {
+                    Logger.LogInformation(error.ToString());
+                }
+
+                return;
+            }
+
+            options = result.Value;
         }
 
-        public int Execute() {
-            Logger.LogInformation($"Connecting to {result.Value.Namespace} as policy {result.Value.PolicyName} for queue {result.Value.Queue}");
+        public async Task<int> ExecuteAsync() {
+            Logger.LogInformation($"Connecting to {options.Namespace} as policy {options.PolicyName} for queue {options.Queue}");
 
-            result
-                .WithParsed(opts => {
-                    var details = GetRuntimeInfo(opts);
-                    Console.Out.WriteLine(JsonConvert.SerializeObject(details));
-                })
-                .WithNotParsed(errors => {
-                    foreach (var error in errors) {
-                        Console.Out.WriteLine(error.ToString());
-                    }
-                });
+            var details = await GetQueueRuntimeInfo();
+            Console.Out.WriteLine(JsonConvert.SerializeObject(details));
 
-            return EXIT_SUCCESS;
+            return Constants.EXIT_SUCCESS;
         }
 
-        public AmqpToolsQueueRuntimeInfo ServiceExecute(QueueOptions options) {
-            return GetRuntimeInfo(options);
-        }
-
-        private AmqpToolsQueueRuntimeInfo GetRuntimeInfo(QueueOptions opts) {
+        internal async Task<AmqpToolsQueueRuntimeInfo> GetQueueRuntimeInfo() {
             try {
-                var adminClient = new ServiceBusAdministrationClient(opts.GetConnectionString());
-                var queue = adminClient.GetQueueRuntimePropertiesAsync(opts.Queue).GetAwaiter().GetResult();
+                var adminClient = new ServiceBusAdministrationClient(options.GetConnectionString());
+                var queue = await adminClient.GetQueueRuntimePropertiesAsync(options.Queue);
                 return Map(queue.Value);
             } catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.MessagingEntityNotFound) {
                 Logger.LogError(ex, "Error getting queue info: {Message}", ex.Message);
-                throw new NotFoundResponseException($"Queue not found {opts.Queue}");
+                throw new NotFoundResponseException($"Queue not found {options.Queue}");
             } catch (Exception ex) {
                 Logger.LogError(ex, "Error getting queue runtime info {Message}", ex.Message);
                 throw new AmqpConnectionException();

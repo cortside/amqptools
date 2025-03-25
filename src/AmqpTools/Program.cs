@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using AmqpTools.Core.Commands;
 using AmqpTools.Core.Commands.DeleteMessage;
 using AmqpTools.Core.Commands.Peek;
@@ -13,42 +14,44 @@ using Microsoft.Extensions.Logging;
 namespace AmqpTools {
     public class Program {
         private static ILogger<Program> logger;
-        public static int Main(string[] args) {
+        public static async Task<int> Main(string[] args) {
             if (args.Length == 0) {
                 throw new ArgumentException("Must pass arguments", nameof(args));
             }
 
-            var configfile = "amqptools.json";
+            var directory = Directory.GetCurrentDirectory();
+            var filename = Path.Combine(directory, "amqptools.json");
+
             var config = new Configuration();
-            if (File.Exists(configfile)) {
+            if (File.Exists(filename)) {
                 var c = new ConfigurationBuilder()
-                    .AddJsonFile(configfile)
+                    .AddJsonFile(filename, true)
                     .Build();
 
                 config = c.Get<Configuration>();
             }
 
             var result = CommandLine.Parser.Default.ParseArguments<PeekOptions, PublishOptions, QueueOptions, DeleteMessageOptions, ShovelOptions>(args);
-            result.WithParsed(x => {
-                Console.WriteLine($"parsed type result: {x}");
+            result
+                .WithNotParsed(x => {
+                    Console.WriteLine("command type not parsed");
+                })
+                .WithParsedAsync(async x => {
+                    Console.WriteLine($"parsed type result: {x}");
 
-                var loggerFactory = LoggerFactory.Create(builder => {
-                    builder
-                        .AddFilter("Microsoft", LogLevel.Warning)
-                        .AddFilter("System", LogLevel.Warning)
-                        .SetMinimumLevel(LogLevel.Debug)
-                        .AddConsole();
+                    var loggerFactory = LoggerFactory.Create(builder => {
+                        builder
+                            .AddFilter("Microsoft", LogLevel.Warning)
+                            .AddFilter("System", LogLevel.Warning)
+                            .SetMinimumLevel(LogLevel.Debug)
+                            .AddConsole();
+                    });
+
+                    var command = new CommandFactory().CreateCommand(loggerFactory, args, config);
+                    if (command != null) {
+                        await command.ExecuteAsync();
+                    }
                 });
-
-                var command = new CommandFactory().CreateCommand(loggerFactory, args, config);
-                if (command != null) {
-                    command.Execute();
-                }
-            })
-            .WithNotParsed(x => {
-                Console.WriteLine("command type not parsed");
-            });
-
 
             return 1;
         }
