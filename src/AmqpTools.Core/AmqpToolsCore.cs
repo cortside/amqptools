@@ -25,14 +25,14 @@ namespace AmqpTools.Core {
         public async Task<AmqpToolsQueueRuntimeInfo> GetQueueRuntimeInfo(QueueOptions options) {
             var command = new QueueCommand(factory.CreateLogger<QueueCommand>(), options);
             command.Logger = factory.CreateLogger<QueueCommand>();
-            var result = await command.GetQueueRuntimeInfo();
+            var result = await command.GetQueueRuntimeInfoAsync();
             return result;
         }
 
         public async Task<IList<AmqpToolsMessage>> PeekMessages(PeekOptions options) {
             var command = new PeekCommand(factory.CreateLogger<PeekCommand>(), options);
             command.Logger = factory.CreateLogger<PeekCommand>();
-            var result = await command.PeekMessages();
+            var result = await command.PeekMessagesAsync();
             return result;
         }
 

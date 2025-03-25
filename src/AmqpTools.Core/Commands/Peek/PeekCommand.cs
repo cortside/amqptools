@@ -28,21 +28,12 @@ namespace AmqpTools.Core.Commands.Peek {
         public void ParseArguments(string[] args, Configuration config) {
             var result = Parser.Default.ParseArguments<PeekOptions>(args);
             result.WithParsed(opts => {
-                opts.ApplyConfig();
+                opts.ApplyConfig(config);
             });
-
-            if (!string.IsNullOrWhiteSpace(result.Value.Environment) && config.Environments.Exists(x => x.Name == result.Value.Environment)) {
-                var env = config.Environments.First(x => x.Name == result.Value.Environment);
-                Logger.LogInformation("Environment {Env} found in config, using environment settings", env.Name);
-                result.Value.Namespace ??= env.Namespace;
-                result.Value.PolicyName ??= env.PolicyName;
-                result.Value.Key ??= env.Key;
-                result.Value.Protocol ??= env.Protocol;
-            }
 
             if (result.Errors.Any()) {
                 foreach (var error in result.Errors) {
-                    Logger.LogInformation(error.ToString());
+                    Logger.LogError(error.ToString());
                 }
 
                 return;
@@ -52,16 +43,13 @@ namespace AmqpTools.Core.Commands.Peek {
         }
 
         public async Task<int> ExecuteAsync() {
-            Logger.LogInformation("Connecting to {Namespace} as policy {PolicyName} for queue {Queue}", options.Namespace, options.PolicyName, options.Queue);
+            Logger.LogDebug("Connecting to {Namespace} as policy {PolicyName} for queue {Queue}", options.Namespace, options.PolicyName, options.Queue);
 
             if (options != null) {
-                var messages = await PeekMessages();
-                Logger.LogInformation("Peeked {Count} messages", messages.Count);
-                foreach (var message in messages) {
-                    Logger.LogDebug(JsonConvert.SerializeObject(message));
-                }
+                var messages = await PeekMessagesAsync();
+                await Console.Out.WriteLineAsync(JsonConvert.SerializeObject(messages, new JsonSerializerSettings() { Formatting = Formatting.Indented }));
 
-                Logger.LogInformation("Peek complete");
+                Logger.LogDebug("Peek complete");
                 return Constants.EXIT_SUCCESS;
             } else {
                 Logger.LogError("No options set");
@@ -69,9 +57,9 @@ namespace AmqpTools.Core.Commands.Peek {
             }
         }
 
-        internal async Task<IList<AmqpToolsMessage>> PeekMessages() {
+        internal async Task<IList<AmqpToolsMessage>> PeekMessagesAsync() {
             string formattedQueue = EntityNameHelper.FormatQueue(options.Queue, options.MessageType);
-            Logger.LogInformation("Peeking {Count} messages from `{FormattedQueue}`", options.Count, formattedQueue);
+            Logger.LogDebug("Peeking {Count} messages from `{FormattedQueue}`", options.Count, formattedQueue);
 
             ServiceBusClient client = new(options.GetConnectionString());
 
@@ -81,12 +69,10 @@ namespace AmqpTools.Core.Commands.Peek {
                 receiver = client.CreateReceiver(formattedQueue, new ServiceBusReceiverOptions {
                     ReceiveMode = ServiceBusReceiveMode.PeekLock
                 });
-                Logger.LogInformation($"receiver created for {formattedQueue}");
+                Logger.LogDebug($"receiver created for {formattedQueue}");
 
                 var list = await receiver.PeekMessagesAsync(options.Count);
-                Logger.LogInformation($"{list.Count}");
                 messages = list.ToList();
-                Logger.LogInformation($"{messages.Count}");
             } catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.MessagingEntityNotFound) {
                 Logger.LogError(ex, "Error peeking messages: {Message}", ex.Message);
                 throw new NotFoundResponseException($"Queue not found {options.Queue}");
@@ -99,16 +85,17 @@ namespace AmqpTools.Core.Commands.Peek {
                 }
             }
 
-            Logger.LogInformation($"{messages.Count} messages peeked");
+            Logger.LogDebug($"{messages.Count} messages peeked");
             return messages.ConvertAll(Map);
         }
 
         private AmqpToolsMessage Map(ServiceBusReceivedMessage message) {
             string body = AmqpMessageHandler.GetBody(message);
 
+            object data = null;
             if (body != null) {
                 List<string> errors = new List<string>();
-                JsonConvert.DeserializeObject(body,
+                data = JsonConvert.DeserializeObject(body,
                     new JsonSerializerSettings {
                         Error = (_, args) => {
                             errors.Add(args.ErrorContext.Error.Message);
@@ -125,17 +112,20 @@ namespace AmqpTools.Core.Commands.Peek {
                 .Where(kvp => !raw.DeliveryAnnotations.ContainsKey(kvp.Key)))
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-            return new AmqpToolsMessage {
-                Body = body,
+            var result = new AmqpToolsMessage {
+                Content = body,
+                Data = data,
                 MessageId = message.MessageId,
                 CorrelationId = message.CorrelationId,
                 PartitionKey = message.PartitionKey,
                 ExpiresAtUtc = message.ExpiresAt.DateTime,
                 ContentType = message.ContentType,
                 ScheduledEnqueueTimeUtc = message.ScheduledEnqueueTime.DateTime,
-                UserProperties = message.ApplicationProperties,
-                SystemProperties = systemProperties,
+                ApplicationProperties = message.ApplicationProperties
+                //SystemProperties = systemProperties,
             };
+
+            return result;
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AmqpTools.Core.Exceptions;
 using CommandLine;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace AmqpTools.Core.Commands.Publish {
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
@@ -24,25 +25,12 @@ namespace AmqpTools.Core.Commands.Publish {
         public void ParseArguments(string[] args, Configuration config) {
             var result = Parser.Default.ParseArguments<PublishOptions>(args);
             result.WithParsed(opts => {
-                opts.ApplyConfig();
+                opts.ApplyConfig(config);
             });
-
-            if (!string.IsNullOrWhiteSpace(result.Value?.Environment) && config.Environments.Exists(x => x.Name == result.Value.Environment)) {
-                var env = config.Environments.First(x => x.Name == result.Value.Environment);
-                Logger.LogInformation("Environment {Env} found in config, using environment settings", env.Name);
-                result.Value.Namespace ??= env.Namespace;
-                result.Value.PolicyName ??= env.PolicyName;
-                result.Value.Key ??= env.Key;
-                result.Value.Protocol ??= env.Protocol;
-            } else {
-                Logger.LogInformation("Not using an environment from config file");
-                Logger.LogInformation("Config names: {Names}", config?.Environments?.Select(x => x.Name));
-                Logger.LogInformation("Requested environment name: {Name}", result.Value?.Environment);
-            }
 
             if (result.Errors.Any()) {
                 foreach (var error in result.Errors) {
-                    Logger.LogInformation(error.ToString());
+                    Logger.LogDebug(error.ToString());
                 }
                 return;
             }
@@ -51,7 +39,7 @@ namespace AmqpTools.Core.Commands.Publish {
         }
 
         public async Task<int> ExecuteAsync() {
-            Logger.LogInformation($"Connecting to {options.Namespace} as policy {options.PolicyName} for queue {options.Queue}");
+            Logger.LogDebug($"Connecting to {options.Namespace} as policy {options.PolicyName} for queue {options.Queue}");
             var result = await PublishMessageAsync();
             return result ? Constants.EXIT_SUCCESS : Constants.ERROR_NO_MESSAGE;
         }
@@ -60,7 +48,7 @@ namespace AmqpTools.Core.Commands.Publish {
             var handler = new AmqpMessageHandler(Logger, options);
 
             if (!string.IsNullOrWhiteSpace(options.File)) {
-                options.Data = File.ReadAllText(options.File);
+                options.Data = (await File.ReadAllBytesAsync(options.File)).ToString();
             }
 
             if (string.IsNullOrEmpty(options.Data)) {
@@ -72,13 +60,14 @@ namespace AmqpTools.Core.Commands.Publish {
             bool success;
             try {
                 handler.Send(message);
+                await Console.Out.WriteLineAsync(JsonConvert.SerializeObject(message, Formatting.Indented));
                 success = true;
             } catch (Exception ex) {
                 Logger.LogError(ex, "Error publishing message");
                 success = false;
             }
             if (success) {
-                Logger.LogInformation("message sent");
+                Logger.LogDebug("message sent");
             }
 
             return success;

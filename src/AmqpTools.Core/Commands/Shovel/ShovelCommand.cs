@@ -10,6 +10,7 @@ using Azure.Messaging.ServiceBus.Administration;
 using CommandLine;
 using Cortside.Common.Messages.MessageExceptions;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace AmqpTools.Core.Commands.Shovel {
     public class ShovelCommand : ICommand {
@@ -26,21 +27,12 @@ namespace AmqpTools.Core.Commands.Shovel {
         public void ParseArguments(string[] args, Configuration config) {
             var result = Parser.Default.ParseArguments<ShovelOptions>(args);
             result.WithParsed(opts => {
-                opts.ApplyConfig();
+                opts.ApplyConfig(config);
             });
-
-            if (!string.IsNullOrWhiteSpace(result.Value.Environment) && config.Environments.Exists(x => x.Name == result.Value.Environment)) {
-                var env = config.Environments.First(x => x.Name == result.Value.Environment);
-                Logger.LogInformation("Environment {Env} found in config, using environment settings", env.Name);
-                result.Value.Namespace ??= env.Namespace;
-                result.Value.PolicyName ??= env.PolicyName;
-                result.Value.Key ??= env.Key;
-                result.Value.Protocol ??= env.Protocol;
-            }
 
             if (result.Errors.Any()) {
                 foreach (var error in result.Errors) {
-                    Logger.LogInformation(error.ToString());
+                    Logger.LogDebug(error.ToString());
                 }
 
                 return;
@@ -50,7 +42,7 @@ namespace AmqpTools.Core.Commands.Shovel {
         }
 
         public async Task<int> ExecuteAsync() {
-            Logger.LogInformation($"Connecting to {options.Namespace} as policy {options.PolicyName} for queue {options.Queue}");
+            Logger.LogDebug($"Connecting to {options.Namespace} as policy {options.PolicyName} for queue {options.Queue}");
 
             var exitCode = await Shovel();
             return exitCode;
@@ -61,17 +53,17 @@ namespace AmqpTools.Core.Commands.Shovel {
 
             var dlq = EntityNameHelper.FormatDeadLetterPath(options.Queue);
             var max = options.Max;
-            Logger.LogInformation("Connecting to {Queue} to shovel maximum of {Max} messages", options.Queue, max);
+            Logger.LogDebug("Connecting to {Queue} to shovel maximum of {Max} messages", options.Queue, max);
             try {
                 if (options.GetConnectionString() != null) {
                     var adminClient = new ServiceBusAdministrationClient(options.GetConnectionString());
                     var queue = await adminClient.GetQueueRuntimePropertiesAsync(options.Queue);
                     var messageCount = queue.Value.DeadLetterMessageCount;
-                    Logger.LogInformation("Message queue {Dlq} has {MessageCount} messages", dlq, messageCount);
+                    Logger.LogDebug("Message queue {Dlq} has {MessageCount} messages", dlq, messageCount);
 
                     if (messageCount < options.Max) {
                         max = Convert.ToInt32(messageCount);
-                        Logger.LogInformation("resetting max messages to {Max}", max);
+                        Logger.LogDebug("resetting max messages to {Max}", max);
                     }
                 }
             } catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.MessagingEntityNotFound) {
@@ -97,14 +89,18 @@ namespace AmqpTools.Core.Commands.Shovel {
                 var useMessageId = !string.IsNullOrEmpty(options.MessageId);
                 List<Amqp.Message> messagesToRelease = new List<Amqp.Message>();
 
+                var messages = new List<Message>();
+
                 while ((message = receiver.Receive(timeout)) != null) {
+                    messages.Add(message);
+
                     nReceived++;
                     var body = AmqpMessageHandler.GetBody(message);
-                    Logger.LogInformation("Reading message {MessageId}", message.Properties.MessageId);
-                    Logger.LogDebug("Message(Properties={0}, ApplicationProperties={1}, Body={2}", message.Properties, message.ApplicationProperties, body);
+                    Logger.LogDebug("Reading message {MessageId}", message.Properties.MessageId);
+                    Logger.LogDebug("Message(Properties={0}, ApplicationProperties={1}, Content={2}", message.Properties, message.ApplicationProperties, body);
 
                     if (body != null && useMessageId && message.Properties.MessageId == options.MessageId) {
-                        Logger.LogInformation("Shoveling single message {MessageId}", options.MessageId);
+                        Logger.LogDebug("Shoveling single message {MessageId}", options.MessageId);
                         handler.Send(message);
                         receiver.Accept(message);
                     } else if (useMessageId) {
@@ -118,19 +114,20 @@ namespace AmqpTools.Core.Commands.Shovel {
                     }
 
                     if (options.Max > 0 && nReceived == max) {
-                        Logger.LogInformation("max messages received");
+                        Logger.LogDebug("max messages received");
                         break;
                     }
                 }
 
-                Logger.LogInformation("releasing {Count} messages", messagesToRelease.Count);
+                Logger.LogDebug("releasing {Count} messages", messagesToRelease.Count);
                 foreach (var msg in messagesToRelease) {
                     Logger.LogDebug("Releasing message {MessageId}, it is not the one to be shoveled", msg.Properties.MessageId);
                     receiver.Release(msg);
                 }
+                Console.Out.WriteLine(JsonConvert.SerializeObject(messages.Select(x => x.Properties.MessageId), Formatting.Indented));
 
                 if (message == null) {
-                    Logger.LogInformation("No message");
+                    Logger.LogDebug("No message");
                     exitCode = Constants.ERROR_NO_MESSAGE;
                 }
                 receiver.Close();
@@ -145,7 +142,7 @@ namespace AmqpTools.Core.Commands.Shovel {
                 throw new AmqpShovelException();
             }
 
-            Logger.LogInformation("done");
+            Logger.LogDebug("done");
             return exitCode;
         }
     }

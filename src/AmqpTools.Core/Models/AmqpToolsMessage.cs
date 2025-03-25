@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace AmqpTools.Core.Models {
     /// <summary>
@@ -6,9 +7,15 @@ namespace AmqpTools.Core.Models {
     /// </summary>
     public class AmqpToolsMessage {
         /// <summary>
-        /// Body, should be json
+        /// Content, should be json
         /// </summary>
-        public string Body { get; set; }
+        public string Content { get; set; }
+
+        /// <summary>
+        /// Deserialized content
+        /// </summary>
+        public object Data { get; set; }
+
         /// <summary>
         /// MessageId
         /// </summary>
@@ -36,7 +43,7 @@ namespace AmqpTools.Core.Models {
         /// <summary>
         /// UserProperties
         /// </summary>
-        public object UserProperties { get; set; }
+        public IReadOnlyDictionary<string, object> ApplicationProperties { get; set; }
         /// <summary>
         /// SystemProperties
         /// </summary>

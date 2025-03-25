@@ -1,8 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using CommandLine;
-using Newtonsoft.Json;
 
 namespace AmqpTools.Core.Commands {
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
@@ -37,6 +35,9 @@ namespace AmqpTools.Core.Commands {
         [Option("config", Default = "amqptools.json", Required = false, HelpText = "filename for Message data/json")]
         public string Config { get; set; }
 
+        [Option("verbose", Default = false, Required = false, HelpText = "Enable more logging")]
+        public bool Verbose { get; set; }
+
         /// <summary>
         /// Do not log this value
         /// </summary>
@@ -60,14 +61,13 @@ namespace AmqpTools.Core.Commands {
             return timeout;
         }
 
-        public void ApplyConfig() {
-            if (File.Exists(Config)) {
-                var s = File.ReadAllText(Config);
-                var json = JsonConvert.DeserializeObject<BaseOptions>(s);
-                Namespace ??= json.Namespace;
-                PolicyName ??= json.PolicyName;
-                Key ??= json.Key;
-                Queue ??= json.Queue;
+        public void ApplyConfig(Configuration config) {
+            if (!string.IsNullOrWhiteSpace(Environment) && config.Environments.Exists(x => x.Name == Environment)) {
+                var env = config.Environments.Find(x => x.Name == Environment);
+                Namespace ??= env.Namespace;
+                PolicyName ??= env.PolicyName;
+                Key ??= env.Key;
+                Protocol ??= env.Protocol;
             }
         }
     }

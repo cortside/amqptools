@@ -45,12 +45,12 @@ namespace AmqpTools.Core {
                 Properties = message.Properties
             };
 
-            logger.LogInformation("publishing message {MessageId} to {Queue} with event type {Message_Type_Key}", message.Properties.MessageId, opts.Queue, message.ApplicationProperties[MESSAGE_TYPE_KEY]);
-            logger.LogDebug("Body for message {MessageId} is {Body}", message.Properties.MessageId, rawBody);
+            logger.LogDebug("publishing message {MessageId} to {Queue} with event type {Message_Type_Key}", message.Properties.MessageId, opts.Queue, message.ApplicationProperties[MESSAGE_TYPE_KEY]);
+            logger.LogDebug("Content for message {MessageId} is {Content}", message.Properties.MessageId, rawBody);
 
             try {
                 sender.Send(m);
-                logger.LogInformation("successfully published message {MessageId}", message.Properties.MessageId);
+                //Console.Out.WriteLine(message.Properties.MessageId);
             } finally {
                 if (sender.Error != null) {
                     logger.LogError("ERROR: [{Condition}] {Description}", sender.Error.Condition, sender.Error.Description);
@@ -115,12 +115,12 @@ namespace AmqpTools.Core {
                 // handle the sequence body
                 Console.WriteLine("Got sequence");
             } else if (amqpMessage.Body.TryGetData(out IEnumerable<ReadOnlyMemory<byte>> bytes)) {
-                // handle the data body - note that unlike when accessing the Body property of the received message,
-                // we actually get back a list of byte arrays, not a single byte array. If you were to access the Body property,
+                // handle the data body - note that unlike when accessing the Content property of the received message,
+                // we actually get back a list of byte arrays, not a single byte array. If you were to access the Content property,
                 // the data would be flattened into a single byte array.
                 Console.WriteLine("got bytes");
                 return GetBody(ConvertToByteArray(bytes));
-                //return GetBody(message.Body.ToArray());
+                //return GetBody(message.Content.ToArray());
             }
 
             return null;

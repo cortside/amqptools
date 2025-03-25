@@ -27,23 +27,12 @@ namespace AmqpTools.Core.Commands.Queue {
         public void ParseArguments(string[] args, Configuration config) {
             var result = Parser.Default.ParseArguments<QueueOptions>(args);
             result.WithParsed(opts => {
-                opts.ApplyConfig();
+                opts.ApplyConfig(config);
             });
-
-            if (!string.IsNullOrWhiteSpace(result.Value.Environment) && config.Environments.Exists(x => x.Name == result.Value.Environment)) {
-                var env = config.Environments.First(x => x.Name == result.Value.Environment);
-                Logger.LogInformation("Environment {Env} found in config, using environment settings", env.Name);
-                result.Value.Namespace ??= env.Namespace;
-                result.Value.PolicyName ??= env.PolicyName;
-                result.Value.Key ??= env.Key;
-                result.Value.Protocol ??= env.Protocol;
-            } else {
-                Logger.LogInformation("Environment {Env} not found in config, using command line settings", result.Value.Environment);
-            }
 
             if (result.Errors.Any()) {
                 foreach (var error in result.Errors) {
-                    Logger.LogInformation(error.ToString());
+                    Logger.LogError(error.ToString());
                 }
 
                 return;
@@ -53,15 +42,15 @@ namespace AmqpTools.Core.Commands.Queue {
         }
 
         public async Task<int> ExecuteAsync() {
-            Logger.LogInformation($"Connecting to {options.Namespace} as policy {options.PolicyName} for queue {options.Queue}");
+            Logger.LogDebug($"Connecting to {options.Namespace} as policy {options.PolicyName} for queue {options.Queue}");
 
-            var details = await GetQueueRuntimeInfo();
-            Console.Out.WriteLine(JsonConvert.SerializeObject(details));
+            var details = await GetQueueRuntimeInfoAsync();
+            await Console.Out.WriteLineAsync(JsonConvert.SerializeObject(details, new JsonSerializerSettings() { Formatting = Formatting.Indented }));
 
             return Constants.EXIT_SUCCESS;
         }
 
-        internal async Task<AmqpToolsQueueRuntimeInfo> GetQueueRuntimeInfo() {
+        internal async Task<AmqpToolsQueueRuntimeInfo> GetQueueRuntimeInfoAsync() {
             try {
                 var adminClient = new ServiceBusAdministrationClient(options.GetConnectionString());
                 var queue = await adminClient.GetQueueRuntimePropertiesAsync(options.Queue);
