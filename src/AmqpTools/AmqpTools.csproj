@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <PublishSingleFile>false</PublishSingleFile>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -17,7 +17,8 @@
     <PackageIconUrl>https://avatars.githubusercontent.com/u/32287038?s=60</PackageIconUrl>
 
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <ToolCommandName>amqptools</ToolCommandName>
+    <ToolCommandName>dotnet-amqptools</ToolCommandName>
+    <AssemblyName>dotnet-amqptools</AssemblyName>
     <PackAsTool>true</PackAsTool>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
