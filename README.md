@@ -6,15 +6,14 @@
 
 CLI tools for interacting with service bus queues.
 
-## Help
-
-Will show available commands
+## Install
 
 ```powershell
-./AmqpTools.exe --help
+dotnet tool install --global AmqpTools
+dotnet tool install --global AmqpTools --version <version>
 ```
 
-## amqptools.json
+### amqptools.json
 
 ```json
 {
@@ -23,35 +22,40 @@ Will show available commands
       "name": "prod",
       "key": "secret=",
       "namespace": "acme-prod.servicebus.windows.net",
-      "policyname": "RootManageSharedAccessKey"
+      "policyname": "SendListen"
     },
     {
       "name": "dev",
       "key": "secret=",
       "namespace": "acme-dev.servicebus.windows.net",
-      "policyname": "RootManageSharedAccessKey"
+      "policyname": "SendListen"
     }
   ]
 }
 ```
 
-### Command help
+## Commands
 
 Will show available and required options
 
 ```powershell
-./AmqpTools.exe shovel --help
+dotnet amqptools --help
+dotnet amqptools <command> --help
 ```
 
-## delete
+### delete
 
-.\src\AmqpTools\bin\Debug\net8.0\AmqpTools.exe delete --environment dev -q shoppingcart.queue --messageType deadletter --config c:\work\cortside\amqptools\amqptools.json --messageId ca097856-295c-49d4-a0c1-86e4806c17e7
+```powershell
+dotnet amqptools delete --config c:\path\to\amqptools.json --environment dev -q shoppingcart.queue --messageType deadletter --messageId ca097856-295c-49d4-a0c1-86e4806c17e7
+```
 
-## peek
+### peek
 
-peek --environment dev -q shoppingcart.queue --messageType deadletter --count 10 --config c:\work\cortside\amqptools\amqptools.json
+```powershell
+dotnet amqptools peek --config c:\path\to\amqptools.json --environment dev -q shoppingcart.queue --messageType deadletter --count 10
+```
 
-## Shovel
+### shovel
 
 ```powershell
 $policyname = "SendListen"
@@ -59,11 +63,11 @@ $namespace = "acme.servicebus.windows.net"
 $key = "secret=="
 $queue = "shoppingcart.queue"
 
-./AmqpTools.exe shovel --queue $queue --namespace $namespace --policyname=$policyname --key=$key
-shovel --environment dev -q shoppingcart.queue --config c:\work\cortside\amqptools\amqptools.json --max 10 --verbose
+dotnet amqptools shovel --queue $queue --namespace $namespace --policyname=$policyname --key=$key
+dotnet amqptools shovel shovel --config c:\path\to\amqptools.json --environment dev -q shoppingcart.queue --max 10 --verbose
 ```
 
-## Publish
+### publish
 
 ```powershell
 $policyname = "SendListen"
@@ -72,15 +76,16 @@ $key = "secret=="
 $queue = "shoppingcart.queue"
 $event = "Acme.ShoppingCartUpdatedEvent"
 
-./AmqpTools.exe publish --queue $queue --namespace $namespace --policyname=$policyname --key=$key --eventtype $event --data '{\"ShoppingCartResourceId\":\"e25d2090-d890-4b8a-a904-5feebf4b6436\"}'
-.\src\AmqpTools\bin\Debug\net8.0\AmqpTools.exe publish --environment dev -q shoppingcart.queue --config c:\work\cortside\amqptools\amqptools.json --eventtype "Acme.DomainEvent.Events.ShoppingCartCreationEvent" --data '{\"ShoppingCartResourceId\":\"e25d2090-d890-4b8a-a904-5feebf4b6436\"}'
+dotnet amqptools publish --queue $queue --namespace $namespace --policyname=$policyname --key=$key --eventtype $event --data '{\"ShoppingCartResourceId\":\"e25d2090-d890-4b8a-a904-5feebf4b6436\"}'
+dotnet amqptools publish --config c:\path\to\amqptools.json --environment dev -q shoppingcart.queue --eventtype "Acme.DomainEvent.Events.ShoppingCartCreationEvent" --data '{\"ShoppingCartResourceId\":\"e25d2090-d890-4b8a-a904-5feebf4b6436\"}'
+
 OR
 
-./AmqpTools.exe publish --queue $queue --namespace $namespace --policyname=$policyname --key=$key --eventtype $event --file "event.json"
-.\src\AmqpTools\bin\Debug\net8.0\AmqpTools.exe publish --environment dev -q shoppingcart.queue --config c:\work\cortside\amqptools\amqptools.json --eventtype "Acme.DomainEvent.Events.ShoppingCartCreationEvent" --file "event.json"
+dotnet amqptools publish --queue $queue --namespace $namespace --policyname=$policyname --key=$key --eventtype $event --file "event.json"
+dotnet amqptools publish --config c:\path\to\amqptools.json --environment dev -q shoppingcart.queue --eventtype "Acme.DomainEvent.Events.ShoppingCartCreationEvent" --file "event.json"
 ```
 
-## Queue details
+### queue
 
 ```powershell
 $policyname = "SendListen"
@@ -88,6 +93,25 @@ $namespace = "acme.servicebus.windows.net"
 $key = "secret=="
 $queue = "shoppingcart.queue"
 
-./AmqpTools.exe queue --queue $queue --namespace $namespace --policyname=$policyname --key=$key
-queue --environment dev -q shoppingcart.queue --config c:\work\cortside\amqptools\amqptools.json
+dotnet amqptools queue --queue $queue --namespace $namespace --policyname=$policyname --key=$key
+dotnet amqptools queue --config c:\path\to\amqptools.json --environment dev -q shoppingcart.queue
+```
+
+Output:
+```json
+{
+  "Path": "onlineapplication.queue",
+  "MessageCount": 6,
+  "MessageCountDetails": {
+    "ActiveMessageCount": 0,
+    "DeadLetterMessageCount": 6,
+    "ScheduledMessageCount": 0,
+    "TransferMessageCount": 0,
+    "TransferDeadLetterMessageCount": 0
+  },
+  "SizeInBytes": 807,
+  "CreatedAt": "2023-02-15T21:27:27.202248",
+  "UpdatedAt": "2024-08-09T04:02:57.2991904",
+  "AccessedAt": "2025-03-26T02:14:33.6177786"
+}
 ```

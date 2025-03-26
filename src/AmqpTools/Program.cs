@@ -1,8 +1,10 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using AmqpTools.Core;
 using AmqpTools.Core.Commands;
 using CommandLine;
+using CommandLine.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -10,8 +12,9 @@ namespace AmqpTools {
     public class Program {
         private static ILogger<Program> logger;
         public static async Task<int> Main(string[] args) {
-            if (args.Length == 0) {
-                throw new ArgumentException("Must pass arguments", nameof(args));
+            if (args.Length == 0 || args[0] == "help" || args[0] == "--help" || args[0] == "-help") {
+                Console.Out.WriteLine(CommandFactory.HelpText);
+                return Constants.ERROR_NO_MESSAGE;
             }
 
             var parser = new Parser(with => {
@@ -21,7 +24,8 @@ namespace AmqpTools {
 
             await result
                 .WithNotParsed(x => {
-                    Console.WriteLine("command type not parsed");
+                    var help = HelpText.AutoBuild(result, x => x, x => x);
+                    Console.WriteLine(help);
                 })
                 .WithParsedAsync(async x => {
                     if (string.IsNullOrWhiteSpace(result.Value.Config)) {

@@ -43,18 +43,17 @@ namespace AmqpTools.Core.Commands.Peek {
         }
 
         public async Task<int> ExecuteAsync() {
-            Logger.LogDebug("Connecting to {Namespace} as policy {PolicyName} for queue {Queue}", options.Namespace, options.PolicyName, options.Queue);
-
             if (options != null) {
+                Logger.LogDebug("Connecting to {Namespace} as policy {PolicyName} for queue {Queue}", options.Namespace, options.PolicyName, options.Queue);
+
                 var messages = await PeekMessagesAsync();
                 await Console.Out.WriteLineAsync(JsonConvert.SerializeObject(messages, new JsonSerializerSettings() { Formatting = Formatting.Indented }));
 
                 Logger.LogDebug("Peek complete");
                 return Constants.EXIT_SUCCESS;
-            } else {
-                Logger.LogError("No options set");
-                return Constants.ERROR_NO_MESSAGE;
             }
+
+            return Constants.ERROR_NO_MESSAGE;
         }
 
         internal async Task<IList<AmqpToolsMessage>> PeekMessagesAsync() {

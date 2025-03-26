@@ -18,9 +18,9 @@ namespace AmqpTools.Core {
     public class AmqpMessageHandler {
         const string MESSAGE_TYPE_KEY = "Message.Type.FullName";
         private readonly ILogger logger;
-        private readonly BaseOptions opts;
+        private readonly QueueOptions opts;
 
-        public AmqpMessageHandler(ILogger logger, BaseOptions opts) {
+        public AmqpMessageHandler(ILogger logger, QueueOptions opts) {
             this.logger = logger;
             this.opts = opts;
         }
@@ -50,7 +50,6 @@ namespace AmqpTools.Core {
 
             try {
                 sender.Send(m);
-                //Console.Out.WriteLine(message.Properties.MessageId);
             } finally {
                 if (sender.Error != null) {
                     logger.LogError("ERROR: [{Condition}] {Description}", sender.Error.Condition, sender.Error.Description);
@@ -120,7 +119,6 @@ namespace AmqpTools.Core {
                 // the data would be flattened into a single byte array.
                 Console.WriteLine("got bytes");
                 return GetBody(ConvertToByteArray(bytes));
-                //return GetBody(message.Content.ToArray());
             }
 
             return null;

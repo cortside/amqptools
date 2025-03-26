@@ -5,11 +5,10 @@ using CommandLine;
 namespace AmqpTools.Core.Commands {
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
     public class BaseOptions {
+        public string Command { get; set; }
+
         [Option('e', "environment", Required = false, HelpText = "Environment", SetName = "configuration")]
         public string Environment { get; set; }
-
-        [Option('q', "Queue", Required = true, HelpText = "Queue")]
-        public string Queue { get; set; }
 
         [Option(Default = 10)]
         public int InitialCredit { get; set; }
