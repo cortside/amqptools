@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -45,7 +45,13 @@ namespace AmqpTools.Core {
                 Properties = message.Properties
             };
 
-            logger.LogDebug("publishing message {MessageId} to {Queue} with event type {Message_Type_Key}", message.Properties.MessageId, opts.Queue, message.ApplicationProperties[MESSAGE_TYPE_KEY]);
+            string messageType = null;
+            try {
+                messageType = message.ApplicationProperties[MESSAGE_TYPE_KEY].ToString();
+            } catch (Exception ex) {
+                logger.LogDebug(ex, "Error extracting message type");
+            }
+            logger.LogDebug("publishing message {MessageId} to {Queue} with event type {Message_Type_Key}", message.Properties.MessageId, opts.Queue, messageType);
             logger.LogDebug("Content for message {MessageId} is {Content}", message.Properties.MessageId, rawBody);
 
             try {

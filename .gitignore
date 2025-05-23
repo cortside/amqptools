@@ -257,3 +257,4 @@ coverage.opencover.xml
 
 amqptools.json
 event.json
+event-json/**
