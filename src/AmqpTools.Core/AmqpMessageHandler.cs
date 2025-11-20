@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,9 +18,9 @@ namespace AmqpTools.Core {
     public class AmqpMessageHandler {
         const string MESSAGE_TYPE_KEY = "Message.Type.FullName";
         private readonly ILogger logger;
-        private readonly BaseOptions opts;
+        private readonly QueueOptions opts;
 
-        public AmqpMessageHandler(ILogger logger, BaseOptions opts) {
+        public AmqpMessageHandler(ILogger logger, QueueOptions opts) {
             this.logger = logger;
             this.opts = opts;
         }
@@ -45,12 +45,17 @@ namespace AmqpTools.Core {
                 Properties = message.Properties
             };
 
-            logger.LogInformation("publishing message {MessageId} to {Queue} with event type {Message_Type_Key}", message.Properties.MessageId, opts.Queue, message.ApplicationProperties[MESSAGE_TYPE_KEY]);
-            logger.LogDebug("Body for message {MessageId} is {Body}", message.Properties.MessageId, rawBody);
+            string messageType = null;
+            try {
+                messageType = message.ApplicationProperties[MESSAGE_TYPE_KEY].ToString();
+            } catch (Exception ex) {
+                logger.LogDebug(ex, "Error extracting message type");
+            }
+            logger.LogDebug("publishing message {MessageId} to {Queue} with event type {Message_Type_Key}", message.Properties.MessageId, opts.Queue, messageType);
+            logger.LogDebug("Content for message {MessageId} is {Content}", message.Properties.MessageId, rawBody);
 
             try {
                 sender.Send(m);
-                logger.LogInformation("successfully published message {MessageId}", message.Properties.MessageId);
             } finally {
                 if (sender.Error != null) {
                     logger.LogError("ERROR: [{Condition}] {Description}", sender.Error.Condition, sender.Error.Description);
@@ -115,12 +120,11 @@ namespace AmqpTools.Core {
                 // handle the sequence body
                 Console.WriteLine("Got sequence");
             } else if (amqpMessage.Body.TryGetData(out IEnumerable<ReadOnlyMemory<byte>> bytes)) {
-                // handle the data body - note that unlike when accessing the Body property of the received message,
-                // we actually get back a list of byte arrays, not a single byte array. If you were to access the Body property,
+                // handle the data body - note that unlike when accessing the Content property of the received message,
+                // we actually get back a list of byte arrays, not a single byte array. If you were to access the Content property,
                 // the data would be flattened into a single byte array.
                 Console.WriteLine("got bytes");
                 return GetBody(ConvertToByteArray(bytes));
-                //return GetBody(message.Body.ToArray());
             }
 
             return null;

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using AmqpTools.Core.Commands.DeleteMessage;
 using AmqpTools.Core.Commands.Peek;
 using AmqpTools.Core.Commands.Publish;
@@ -9,9 +11,9 @@ using Microsoft.Extensions.Logging;
 
 namespace AmqpTools.Core.Commands {
     public class CommandFactory {
-        private readonly Dictionary<string, Type> commands;
+        private static readonly Dictionary<string, Type> commands;
 
-        public CommandFactory() {
+        static CommandFactory() {
             commands = new Dictionary<string, Type>() {
                 {"queue", typeof(QueueCommand)},
                 {"shovel", typeof(ShovelCommand)},
@@ -21,10 +23,13 @@ namespace AmqpTools.Core.Commands {
             };
         }
 
+        public static List<string> Commands => commands.Keys.ToList();
+
         public ICommand CreateCommand(ILoggerFactory loggerFactory, string[] args, Configuration config) {
             var name = args[0];
             if (!commands.TryGetValue(name, out Type value)) {
-                throw new ArgumentException($"unknown command {name}", nameof(name));
+                Console.Out.WriteLine(HelpText);
+                return null;
             }
 
             var type = value;
@@ -35,15 +40,15 @@ namespace AmqpTools.Core.Commands {
             return command;
         }
 
-        public IServiceCommand<TOptions, TResult> CreateCommand<TOptions, TResult>(ILoggerFactory loggerFactory, Type type) {
-            if (!commands.ContainsValue(type)) {
-                throw new InvalidOperationException($"unknown command type {nameof(type)}");
+        public static string HelpText {
+            get {
+                var sb = new StringBuilder();
+                sb.AppendLine("ERROR(S): ");
+                sb.AppendLine($"Valid commands are: {string.Join(',', CommandFactory.Commands)}");
+                sb.AppendLine("Use `dotnet amqptools <command> --help` for command help");
+
+                return sb.ToString();
             }
-
-            var command = Activator.CreateInstance(type) as IServiceCommand<TOptions, TResult>;
-            command.Logger = loggerFactory.CreateLogger(type);
-
-            return command;
         }
     }
 }

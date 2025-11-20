@@ -256,3 +256,5 @@ coverage.opencover.xml
 .env.local
 
 amqptools.json
+event.json
+event-json/**

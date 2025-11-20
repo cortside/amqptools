@@ -2,79 +2,75 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using AmqpTools.Core.Exceptions;
 using CommandLine;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace AmqpTools.Core.Commands.Publish {
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
     public class PublishCommand : ICommand {
-        private const int EXIT_SUCCESS = 0;
-        const int ERROR_NO_MESSAGE = 1;
-        const int ERROR_OTHER = 2;
-
-        private ParserResult<PublishOptions> result;
+        private PublishOptions options;
 
         public ILogger Logger { get; set; }
 
         public PublishCommand() { }
 
-        public void ParseArguments(string[] args, Configuration config) {
-            result = Parser.Default.ParseArguments<PublishOptions>(args);
-            result.WithParsed(opts => {
-                opts.ApplyConfig();
-            });
-
-            if (!string.IsNullOrWhiteSpace(result.Value?.Environment) && config.Environments.Exists(x => x.Name == result.Value.Environment)) {
-                var env = config.Environments.First(x => x.Name == result.Value.Environment);
-                Logger.LogInformation("Environment {Env} found in config, using environment settings", env.Name);
-                result.Value.Namespace ??= env.Namespace;
-                result.Value.PolicyName ??= env.PolicyName;
-                result.Value.Key ??= env.Key;
-                result.Value.Protocol ??= env.Protocol;
-            } else {
-                Logger.LogInformation("Not using an environment from config file");
-                Logger.LogInformation("Config names: {Names}", config?.Environments?.Select(x => x.Name));
-                Logger.LogInformation("Requested environment name: {Name}", result.Value?.Environment);
-            }
+        public PublishCommand(ILogger logger, PublishOptions options) {
+            Logger = logger;
+            this.options = options;
         }
 
-        public int Execute() {
-            Logger.LogInformation($"Connecting to {result.Value.Namespace} as policy {result.Value.PolicyName} for queue {result.Value.Queue}");
+        public void ParseArguments(string[] args, Configuration config) {
+            var result = Parser.Default.ParseArguments<PublishOptions>(args);
+            result.WithParsed(opts => {
+                opts.ApplyConfig(config);
+            });
 
-            result
-                .WithParsed(opts => {
-                    var handler = new AmqpMessageHandler(Logger, opts);
+            if (result.Errors.Any()) {
+                foreach (var error in result.Errors) {
+                    Logger.LogDebug(error.ToString());
+                }
+                return;
+            }
 
-                    if (!string.IsNullOrWhiteSpace(opts.File)) {
-                        opts.Data = File.ReadAllText(opts.File);
-                    }
+            options = result.Value;
+        }
 
-                    if (string.IsNullOrEmpty(opts.Data)) {
-                        Logger.LogError("Data or File must be specified and have data");
-                        throw new InvalidArgumentMessageException($"Data or File option must be specified and have data");
-                    }
+        public async Task<int> ExecuteAsync() {
+            Logger.LogDebug($"Connecting to {options.Namespace} as policy {options.PolicyName} for queue {options.Queue}");
+            var result = await PublishMessageAsync();
+            return result ? Constants.EXIT_SUCCESS : Constants.ERROR_NO_MESSAGE;
+        }
 
-                    var message = AmqpMessageHandler.CreateMessage(opts.EventType, opts.Data, null);
-                    bool success;
-                    try {
-                        handler.Send(message);
-                        success = true;
-                    } catch (Exception ex) {
-                        Logger.LogError(ex, "Error publishing message");
-                        success = false;
-                    }
-                    if (success) {
-                        Logger.LogInformation("message sent");
-                    }
-                })
-                .WithNotParsed(errors => {
-                    foreach (var error in errors) {
-                        Console.Out.WriteLine(error.ToString());
-                    }
-                });
+        internal async Task<bool> PublishMessageAsync() {
+            var handler = new AmqpMessageHandler(Logger, options);
 
-            return EXIT_SUCCESS;
+            if (!string.IsNullOrWhiteSpace(options.File)) {
+                options.Data = (await File.ReadAllBytesAsync(options.File)).ToString();
+            }
+
+            if (string.IsNullOrEmpty(options.Data)) {
+                Logger.LogError("Data or File must be specified and have data");
+                throw new InvalidArgumentMessageException($"Data or File option must be specified and have data");
+            }
+
+            var message = AmqpMessageHandler.CreateMessage(options.EventType, options.Data, null);
+            bool success;
+            try {
+                handler.Send(message);
+                await Console.Out.WriteLineAsync(JsonConvert.SerializeObject(message, Formatting.Indented));
+                success = true;
+            } catch (Exception ex) {
+                Logger.LogError(ex, "Error publishing message");
+                success = false;
+            }
+            if (success) {
+                Logger.LogDebug("message sent");
+            }
+
+            return success;
         }
     }
 }
