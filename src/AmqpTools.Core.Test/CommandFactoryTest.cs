@@ -1,4 +1,3 @@
-using System;
 using AmqpTools.Core.Commands;
 using AmqpTools.Core.Commands.Publish;
 using Microsoft.Extensions.Logging;
@@ -21,11 +20,8 @@ namespace AmqpTools.Test {
 
         [Fact]
         public void ShouldThrowOnUnknownCommand() {
-            // Act & assert
-            var exception = Should.Throw<ArgumentException>(() =>
-                new CommandFactory().CreateCommand(loggerFactory, new string[] { "blah" }, new Configuration())
-            );
-            exception.Message.ShouldBe("unknown command blah (Parameter 'name')");
+            var x = new CommandFactory().CreateCommand(loggerFactory, new string[] { "blah" }, new Configuration());
+            x.ShouldBeNull("unknown command");
         }
 
         [Fact]
