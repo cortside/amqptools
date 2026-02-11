@@ -1,0 +1,73 @@
+using System;
+using System.Diagnostics.CodeAnalysis;
+using CommandLine;
+
+namespace AmqpTools.Core.Commands {
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
+    public class BaseOptions {
+        public string Command { get; set; }
+
+        [Option('e', "environment", Required = false, HelpText = "Environment", SetName = "configuration")]
+        public string Environment { get; set; }
+
+        [Option(Default = 10)]
+        public int InitialCredit { get; set; }
+
+        [Option(Default = 1)]
+        public double Timeout { get; set; }
+
+        [Option('n', "namespace", Required = false, HelpText = "Namespace to connect to", SetName = "configuration")]
+        public string Namespace { get; set; }
+
+        [Option('k', "key", Required = false, HelpText = "Key to connect to namespace", SetName = "configuration")]
+        public string Key { get; set; }
+
+        [Option('p', "policyname", Required = false, HelpText = "Policy for key used to connect to namespace", SetName = "configuration")]
+        public string PolicyName { get; set; }
+
+        [Option(Default = "amqps", Required = false, HelpText = "[amqps|amqp] non-secure typically only for local, i.e. rabbitmq", SetName = "configuration")]
+        public string Protocol { get; set; }
+
+        [Option(Default = 1)]
+        public int Durable { get; set; }
+
+        [Option("config", Default = "amqptools.json", Required = false, HelpText = "filename for Message data/json")]
+        public string Config { get; set; }
+
+        [Option("verbose", Default = false, Required = false, HelpText = "Enable more logging")]
+        public bool Verbose { get; set; }
+
+        /// <summary>
+        /// Do not log this value
+        /// </summary>
+        /// <returns></returns>
+        public string GetUrl() {
+            return $"{Protocol}://{PolicyName}:{Key}@{Namespace}/";
+        }
+
+        public string GetConnectionString() {
+            if (Namespace.Contains("windows.net")) {
+                return $"Endpoint=sb://{Namespace}/;SharedAccessKeyName={PolicyName};SharedAccessKey={Key}";
+            }
+            return null;
+        }
+
+        public TimeSpan GetTimeSpan() {
+            TimeSpan timeout = TimeSpan.MaxValue;
+            if (Timeout != 0) {
+                timeout = TimeSpan.FromSeconds(Timeout);
+            }
+            return timeout;
+        }
+
+        public void ApplyConfig(Configuration config) {
+            if (!string.IsNullOrWhiteSpace(Environment) && config.Environments.Exists(x => x.Name == Environment)) {
+                var env = config.Environments.Find(x => x.Name == Environment);
+                Namespace ??= env.Namespace;
+                PolicyName ??= env.PolicyName;
+                Key ??= env.Key;
+                Protocol ??= env.Protocol;
+            }
+        }
+    }
+}

@@ -1,86 +1,66 @@
-## https://www.appveyor.com/docs/appveyor-yml/
+##
+# library build
+##
 
-image: Visual Studio 2019
+image: Previous Visual Studio 2022
 
-version: 1.0.{build}
+version: 8.0.{build}
 
 configuration:
 - Debug
 
 platform: Any CPU
 
+pull_requests:  
+  do_not_increment_build_number: true
+
+skip_commits:
+  files:
+    - CHANGELOG.md
+    - appveyor.yml
+    - repository.json
+    - src/version.json
+
 environment:
   # Don't report back to the mothership
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  JAVA_HOME: C:\Program Files\Java\jdk19
+  SONAR_TOKEN:
+    secure: fNmV/P8zSNwd3LWpzw2nnm807oe1Hr0gr11hTItGCXmnVQ0tHN1ESPUjLYjsXmpG
+  RESTRICTED_WORDS:
+    secure: y2oCk9wYmgBAzk4m1tsSFUOlcEePEjozzMCfC0p6NQI=
 
-init:
+install:
+- ps: ./dotenv.ps1
 - ps: $Env:LABEL = "CI" + $Env:APPVEYOR_BUILD_NUMBER.PadLeft(5, "0")
-
-assembly_info:
-  patch: true
-  file: '**\AssemblyInfo.*'
-  assembly_version: '{version}'
-  assembly_file_version: '{version}'
-  assembly_informational_version: '{version}'
+- ps: Get-ChildItem "Env:"
 
 before_build:
-- appveyor-retry dotnet restore src/AmqpTools.sln -v Minimal
+- appveyor-retry dotnet restore src -v Minimal
 - set DNX_BUILD_VERSION=%APPVEYOR_BUILD_NUMBER%
 - dotnet --info
+- ps: ./prebuild.ps1
 
 build:
   publish_nuget: true
   publish_nuget_symbols: true
+  use_snupkg_format: true 
   include_nuget_references: true
   verbosity: minimal
 
 build_script:
-- ps: >-
-    ./build.ps1 -runtime win-x64;
-    ./build.ps1 -runtime linux-x64;
-    ./build.ps1 -runtime alpine-x64;
+- pwsh: .\appveyor-build.ps1
 
-after_build:
-- ps: >-
-    $branch = $ENV:APPVEYOR_REPO_BRANCH;
-    $fileVersion = $env:APPVEYOR_BUILD_VERSION;
-    if($branch -ne 'master') {
-        $fileVersion = "${fileVersion}-${branch}"; 
-    }
-    gci -include *.nuspec -Recurse | %{ 
-        $csproj = ($_.Fullname).Replace('.nuspec','.csproj')
-        if((Test-Path -path $_.Fullname) -and (Test-Path -path $csproj )) { 
-            dotnet pack $csproj --configuration $env:configuration -o ((get-location).Path + '\artifacts') /property:Version=$fileVersion 
-        }
-    }
-- cmd: 7z a amqptools.zip -r %APPVEYOR_BUILD_FOLDER%\publish\*
-- cmd: appveyor PushArtifact amqptools.zip
-    
+artifacts:
+- path: artifacts\**\*.*
+
 cache:
 - '%USERPROFILE%\.nuget\packages'
   
 nuget:
   disable_publish_on_pr: true
-
-artifacts:
-- path: amqptools.zip
-  name: deploy
+  
 deploy:
-- provider: GitHub
-  description: '$(appveyor_build_version)'
-  auth_token:
-    secure: zCTy7HewzmO4PXDIy8WegsOGMYq05BxUr+Y6RBBG5RIbcMX7exf/C7+cBgv5yhDY
-  artifact: deploy
-  draft: false
-  prerelease: false
-  on:
-    branch: master                 # release from master branch only
-- provider: GitHub
-  description: '$(appveyor_build_version)-develop'
-  auth_token:
-    secure: zCTy7HewzmO4PXDIy8WegsOGMYq05BxUr+Y6RBBG5RIbcMX7exf/C7+cBgv5yhDY
-  artifact: deploy
-  draft: false
-  prerelease: true
-  on:
-    branch: develop                 
+- provider: NuGet
+  api_key:
+    secure: Egi9LPmRCLrBDQ41NzEURf4ChJFR2CscyyPA6qzJmJ+NJhKWAIeJm/7f/z8E2ppI
