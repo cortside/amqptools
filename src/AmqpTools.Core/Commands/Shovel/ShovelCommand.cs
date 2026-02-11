@@ -44,11 +44,11 @@ namespace AmqpTools.Core.Commands.Shovel {
         public async Task<int> ExecuteAsync() {
             Logger.LogDebug($"Connecting to {options.Namespace} as policy {options.PolicyName} for queue {options.Queue}");
 
-            var exitCode = await Shovel();
+            var exitCode = await ShovelAsync();
             return exitCode;
         }
 
-        internal async Task<int> Shovel() {
+        internal async Task<int> ShovelAsync() {
             var handler = new AmqpMessageHandler(Logger, options);
 
             var dlq = EntityNameHelper.FormatDeadLetterPath(options.Queue);
@@ -91,7 +91,7 @@ namespace AmqpTools.Core.Commands.Shovel {
 
                 var messages = new List<Message>();
 
-                while ((message = receiver.Receive(timeout)) != null) {
+                while ((message = await receiver.ReceiveAsync(timeout)) != null) {
                     messages.Add(message);
 
                     nReceived++;
@@ -124,19 +124,19 @@ namespace AmqpTools.Core.Commands.Shovel {
                     Logger.LogDebug("Releasing message {MessageId}, it is not the one to be shoveled", msg.Properties.MessageId);
                     receiver.Release(msg);
                 }
-                Console.Out.WriteLine(JsonConvert.SerializeObject(messages.Select(x => x.Properties.MessageId), Formatting.Indented));
+                await Console.Out.WriteLineAsync(JsonConvert.SerializeObject(messages.Select(x => x.Properties.MessageId), Formatting.Indented));
 
                 if (message == null) {
                     Logger.LogDebug("No message");
                     exitCode = Constants.ERROR_NO_MESSAGE;
                 }
-                receiver.Close();
-                session.Close();
-                connection.Close();
+                await receiver.CloseAsync();
+                await session.CloseAsync();
+                await connection.CloseAsync();
             } catch (Exception e) {
                 Logger.LogError(e, "Exception {0}.", e.Message);
                 if (null != connection) {
-                    connection.Close();
+                    await connection.CloseAsync();
                 }
                 exitCode = Constants.ERROR_OTHER;
                 throw new AmqpShovelException();

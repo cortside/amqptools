@@ -8,12 +8,12 @@ using AmqpTools.Core.Models;
 
 namespace AmqpTools.Core {
     public interface IAmqpToolsCore {
-        Task<bool> DeleteMessage(DeleteMessageOptions options);
+        Task<bool> DeleteMessageAsync(DeleteMessageOptions options);
 
-        Task<AmqpToolsQueueRuntimeInfo> GetQueueRuntimeInfo(QueueOptions options);
+        Task<AmqpToolsQueueRuntimeInfo> GetQueueRuntimeInfoAsync(QueueOptions options);
 
-        Task ShovelMessages(ShovelOptions options);
+        Task ShovelMessagesAsync(ShovelOptions options);
 
-        Task<IList<AmqpToolsMessage>> PeekMessages(PeekOptions options);
+        Task<IList<AmqpToolsMessage>> PeekMessagesAsync(PeekOptions options);
     }
 }

@@ -9,5 +9,11 @@ namespace AmqpTools.Core.Exceptions {
 
         public AmqpMessageParseException(string message, System.Exception exception) : base(message, exception) {
         }
+
+        protected AmqpMessageParseException(string key, string property, params object[] properties) : base(key, property, properties) {
+        }
+
+        protected AmqpMessageParseException(string message, string property) : base(message, property) {
+        }
     }
 }
