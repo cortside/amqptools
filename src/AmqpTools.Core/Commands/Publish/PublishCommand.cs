@@ -56,7 +56,8 @@ namespace AmqpTools.Core.Commands.Publish {
                 throw new InvalidArgumentMessageException($"Data or File option must be specified and have data");
             }
 
-            var message = AmqpMessageHandler.CreateMessage(options.EventType, options.Data, null);
+            string correlationId = options.GenerateCorrelationId ? Guid.NewGuid().ToString() : null;
+            var message = AmqpMessageHandler.CreateMessage(options.EventType, options.Data, correlationId);
             bool success;
             try {
                 handler.Send(message);
