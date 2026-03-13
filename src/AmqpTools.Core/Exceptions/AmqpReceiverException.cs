@@ -9,5 +9,11 @@ namespace AmqpTools.Core.Exceptions {
 
         public AmqpReceiverException(string message, System.Exception exception) : base(message, exception) {
         }
+
+        protected AmqpReceiverException(string key, string property, params object[] properties) : base(key, property, properties) {
+        }
+
+        protected AmqpReceiverException(string message, string property) : base(message, property) {
+        }
     }
 }

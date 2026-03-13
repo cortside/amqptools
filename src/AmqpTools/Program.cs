@@ -10,10 +10,9 @@ using Microsoft.Extensions.Logging;
 
 namespace AmqpTools {
     public class Program {
-        private static ILogger<Program> logger;
         public static async Task<int> Main(string[] args) {
             if (args.Length == 0 || args[0] == "help" || args[0] == "--help" || args[0] == "-help") {
-                Console.Out.WriteLine(CommandFactory.HelpText);
+                await Console.Out.WriteLineAsync(CommandFactory.HelpText);
                 return Constants.ERROR_NO_MESSAGE;
             }
 

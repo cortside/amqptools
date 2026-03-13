@@ -9,5 +9,11 @@ namespace AmqpTools.Core.Exceptions {
 
         public InvalidArgumentMessageException(string message, System.Exception exception) : base(message, exception) {
         }
+
+        protected InvalidArgumentMessageException(string key, string property, params object[] properties) : base(key, property, properties) {
+        }
+
+        protected InvalidArgumentMessageException(string message, string property) : base(message, property) {
+        }
     }
 }

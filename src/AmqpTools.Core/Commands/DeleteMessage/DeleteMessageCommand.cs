@@ -43,11 +43,11 @@ namespace AmqpTools.Core.Commands.DeleteMessage {
 
         public async Task<int> ExecuteAsync() {
             Logger.LogDebug($"Connecting to {options.Namespace} as policy {options.PolicyName} for queue {options.Queue}");
-            var result = await DeleteMessage();
+            var result = await DeleteMessageAsync();
             return Constants.EXIT_SUCCESS;
         }
 
-        internal async Task<bool> DeleteMessage() {
+        internal async Task<bool> DeleteMessageAsync() {
             var success = false;
 
             string formattedQueue = EntityNameHelper.FormatQueue(options.Queue, options.MessageType);
@@ -55,7 +55,7 @@ namespace AmqpTools.Core.Commands.DeleteMessage {
 
             Logger.LogDebug("Attempting to delete message {MessageId}", options.MessageId);
 
-            var counts = await GetQueue(options);
+            var counts = await GetQueueAsync(options);
             var count = formattedQueue.Contains("deadletter", StringComparison.CurrentCultureIgnoreCase) ? counts.DeadLetterMessageCount : counts.ActiveMessageCount;
             AmqpConnection conn = null;
             List<Amqp.Message> messages = new List<Amqp.Message>();
@@ -120,7 +120,7 @@ namespace AmqpTools.Core.Commands.DeleteMessage {
             public Session Session { get; set; }
         }
 
-        private async Task<QueueRuntimeProperties> GetQueue(DeleteMessageOptions opts) {
+        private async Task<QueueRuntimeProperties> GetQueueAsync(DeleteMessageOptions opts) {
             try {
                 var adminClient = new ServiceBusAdministrationClient(opts.GetConnectionString());
                 var queue = await adminClient.GetQueueRuntimePropertiesAsync(opts.Queue);

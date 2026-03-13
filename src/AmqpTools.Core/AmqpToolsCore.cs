@@ -18,29 +18,29 @@ namespace AmqpTools.Core {
             factory = serviceProvider.GetRequiredService<ILoggerFactory>();
         }
 
-        public Task ShovelMessages(ShovelOptions options) {
+        public Task ShovelMessagesAsync(ShovelOptions options) {
             var command = new ShovelCommand(factory.CreateLogger<ShovelCommand>(), options);
-            return command.Shovel();
+            return command.ShovelAsync();
         }
 
-        public async Task<AmqpToolsQueueRuntimeInfo> GetQueueRuntimeInfo(QueueOptions options) {
+        public async Task<AmqpToolsQueueRuntimeInfo> GetQueueRuntimeInfoAsync(QueueOptions options) {
             var command = new QueueCommand(factory.CreateLogger<QueueCommand>(), options);
             command.Logger = factory.CreateLogger<QueueCommand>();
             var result = await command.GetQueueRuntimeInfoAsync();
             return result;
         }
 
-        public async Task<IList<AmqpToolsMessage>> PeekMessages(PeekOptions options) {
+        public async Task<IList<AmqpToolsMessage>> PeekMessagesAsync(PeekOptions options) {
             var command = new PeekCommand(factory.CreateLogger<PeekCommand>(), options);
             command.Logger = factory.CreateLogger<PeekCommand>();
             var result = await command.PeekMessagesAsync();
             return result;
         }
 
-        public async Task<bool> DeleteMessage(DeleteMessageOptions options) {
+        public async Task<bool> DeleteMessageAsync(DeleteMessageOptions options) {
             var command = new DeleteMessageCommand(factory.CreateLogger<DeleteMessageCommand>(), options);
             command.Logger = factory.CreateLogger<DeleteMessageCommand>();
-            var result = await command.DeleteMessage();
+            var result = await command.DeleteMessageAsync();
             return result;
         }
     }

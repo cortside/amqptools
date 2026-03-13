@@ -9,5 +9,11 @@ namespace AmqpTools.Core.Exceptions {
 
         public AmqpPeekException(string message, System.Exception exception) : base(message, exception) {
         }
+
+        protected AmqpPeekException(string key, string property, params object[] properties) : base(key, property, properties) {
+        }
+
+        protected AmqpPeekException(string message, string property) : base(message, property) {
+        }
     }
 }
