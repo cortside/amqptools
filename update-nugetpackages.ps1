@@ -74,3 +74,6 @@ if ($NoVersionLock.IsPresent) {
 if ($cortside.IsPresent) {
 	dotnet outdated ./src --include Cortside --upgrade
 }
+
+## update to latest matching major and minor version pre-release package (i.e. branch to master)
+# dotnet outdated ./src --version-lock Minor --include Cortside --pre-release Always
