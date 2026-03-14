@@ -1,5 +1,16 @@
-# Release 8.0
+# Release 8.1
 
+|Commit|Date|Author|Message|
+|---|---|---|---|
+| 4385593 | <span style="white-space:nowrap;">2026-02-10</span> | <span style="white-space:nowrap;">Cort Schaefer</span> |  update version
+| 28ab9bd | <span style="white-space:nowrap;">2026-02-25</span> | <span style="white-space:nowrap;">John Stokes</span> |  (tag: 1.0.80, tag: 1.0.79.correlationId, origin/regions-EBPP-4180) [EBPP-4180] add optin for generating correlation Id
+| bae4fbd | <span style="white-space:nowrap;">2026-03-12</span> | <span style="white-space:nowrap;">Cort Schaefer</span> |  Merge pull request #10 from cortside/regions-EBPP-4180
+| 0b725b2 | <span style="white-space:nowrap;">2026-03-12</span> | <span style="white-space:nowrap;">Cort Schaefer</span> |  update nuget packages and scripts
+| 232a0b0 | <span style="white-space:nowrap;">2026-03-13</span> | <span style="white-space:nowrap;">Cort Schaefer</span> |  update scripts
+| 0e6e729 | <span style="white-space:nowrap;">2026-03-14</span> | <span style="white-space:nowrap;">Cort Schaefer</span> |  (HEAD -> release/8.1, origin/develop, develop) merge master
+****
+
+# Release 8.0
 |Commit|Date|Author|Message|
 |---|---|---|---|
 | 8deceeb | <span style="white-space:nowrap;">2022-12-21</span> | <span style="white-space:nowrap;">Cort Schaefer</span> |  (tag: 1.0.79) update github api key
@@ -64,7 +75,6 @@
 | 549c02c | <span style="white-space:nowrap;">2026-02-10</span> | <span style="white-space:nowrap;">Cort Schaefer</span> |  add empty changelog to start
 | 8cd587b | <span style="white-space:nowrap;">2026-02-10</span> | <span style="white-space:nowrap;">Cort Schaefer</span> |  (HEAD -> release/8.0, origin/develop, develop) add empty changelog to start
 ****
-
 # Release 1.0
 * see github and nuget.org for versions and information
 |Commit|Date|Author|Message|

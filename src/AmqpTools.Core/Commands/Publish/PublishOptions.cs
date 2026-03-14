@@ -11,5 +11,7 @@ namespace AmqpTools.Core.Commands.Publish {
         public string File { get; set; }
         [Option("eventtype", Required = true, HelpText = "Event type (event class full name)")]
         public string EventType { get; set; }
+        [Option("generateCorrelationId", Required = false, HelpText = "Generate a correlation id (GUID) for the published message")]
+        public bool GenerateCorrelationId { get; set; } = false;
     }
 }

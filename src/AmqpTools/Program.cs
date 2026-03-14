@@ -9,7 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace AmqpTools {
-    public class Program {
+    public static class Program {
         public static async Task<int> Main(string[] args) {
             if (args.Length == 0 || args[0] == "help" || args[0] == "--help" || args[0] == "-help") {
                 await Console.Out.WriteLineAsync(CommandFactory.HelpText);
