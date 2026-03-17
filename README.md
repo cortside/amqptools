@@ -4,9 +4,8 @@
 
 # amqptools
 
-NOTE: Requires .NET SDK 10.0 or greater
-
 CLI tools for interacting with service bus queues.
+NOTE: Requires .NET SDK 10.0 or greater
 
 ## Install
 
